@@ -47,10 +47,16 @@ impl std::fmt::Debug for Error {
 
 fn handle_stream(stream: Result<TcpStream, std::io::Error>) -> Result<String> {
     let mut ws = accept(stream?)?;
+
     let msg = ws.read()?;
     let user = String::from_utf8(msg.into_data())?;
+
     let status = Command::new("mcrcon")
-        .args(["-p", "8q94Jeeplamp1", "whitelist", "add", &user])
+        .args([
+            "-p",
+            "8q94Jeeplamp1",
+            format!("whitelist add {}", user).as_str(),
+        ])
         .status()?;
 
     ws.send(Message::binary([status.success() as u8]))?;
@@ -61,9 +67,12 @@ fn main() -> Result<()> {
     let server = TcpListener::bind("localhost:8080")?;
 
     for stream in server.incoming() {
-        spawn(move || match handle_stream(stream) {
-            Ok(user) => println!("Added user '{}'", user),
-            Err(e) => eprintln!("{}", e),
+        println!("{:?}", stream);
+
+        spawn(move || {
+            if let Err(e) = handle_stream(stream) {
+                eprintln!("{}", e)
+            }
         });
     }
     unreachable!()

@@ -12,7 +12,7 @@ fn handle_input(input: String, p: HtmlElement) {
         return p.set_text_content(Some("Please provide a valid username."));
     }
 
-    let ws = WebSocket::new("ws://localhost:8080").unwrap();
+    let ws = WebSocket::new("wss://mc.rustychads.com/api").unwrap();
     ws.set_binary_type(BinaryType::Arraybuffer);
 
     {
