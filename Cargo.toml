@@ -1,0 +1,12 @@
+[workspace]
+resolver = "2"
+members = [ "wlrs-server",
+    "wlrs-wasm", "wlrs-wasm"
+]
+
+[profile.release]
+lto = true
+codegen-units = 1
+
+[profile.release.package.wlrs-wasm]
+opt-level = "s"
