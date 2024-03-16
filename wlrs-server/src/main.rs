@@ -1,7 +1,7 @@
+use dotenv::{dotenv, var};
 use std::net::{TcpListener, TcpStream};
 use std::process::Command;
 use std::thread::spawn;
-
 use tungstenite::handshake::HandshakeRole;
 use tungstenite::{accept, Message};
 
@@ -33,6 +33,12 @@ impl<T: HandshakeRole> From<tungstenite::HandshakeError<T>> for Error {
     }
 }
 
+impl From<dotenv::Error> for Error {
+    fn from(value: dotenv::Error) -> Self {
+        Self(value.to_string())
+    }
+}
+
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(&self.0)
@@ -45,32 +51,48 @@ impl std::fmt::Debug for Error {
     }
 }
 
-fn handle_stream(stream: Result<TcpStream, std::io::Error>) -> Result<String> {
+fn handle_stream(stream: Result<TcpStream, std::io::Error>, pass: &str) -> Result<()> {
     let mut ws = accept(stream?)?;
 
     let msg = ws.read()?;
     let user = String::from_utf8(msg.into_data())?;
 
-    let status = Command::new("mcrcon")
-        .args([
-            "-p",
-            "8q94Jeeplamp1",
-            format!("whitelist add {}", user).as_str(),
-        ])
-        .status()?;
+    let stdout = Command::new("mcrcon")
+        .args(["-p", pass, format!("whitelist add {}", user).as_str()])
+        .output()?
+        .stdout;
 
-    ws.send(Message::binary([status.success() as u8]))?;
-    Ok(user)
+    let status = if stdout.is_empty() {
+        // "Minecraft server is down"
+        0
+    } else {
+        let res = String::from_utf8_lossy(stdout.as_slice());
+
+        if res.starts_with("That player does not exist") {
+            1 // "Player doesn't exist"
+        } else if res.starts_with("Player is already whitelisted") {
+            2 // "Already whitelisted"
+        } else if res.starts_with("Added") {
+            3 // "Success"
+        } else {
+            4 // "Unexpected server response"
+        }
+    };
+    ws.send(Message::Binary(vec![status])).map_err(Into::into)
 }
 
 fn main() -> Result<()> {
-    let server = TcpListener::bind("localhost:8080")?;
+    dotenv()?;
+    let addr = var("WLRS_SERVER_ADDR")?;
+    let pass = var("RCON_PASS")?;
+
+    let server = TcpListener::bind(addr)?;
 
     for stream in server.incoming() {
-        println!("{:?}", stream);
+        let pass = pass.clone();
 
         spawn(move || {
-            if let Err(e) = handle_stream(stream) {
+            if let Err(e) = handle_stream(stream, &pass) {
                 eprintln!("{}", e)
             }
         });
