@@ -1,4 +1,5 @@
-use dotenv::{dotenv, var};
+mod env;
+
 use std::net::{TcpListener, TcpStream};
 use std::process::Command;
 use std::thread::spawn;
@@ -33,12 +34,6 @@ impl<T: HandshakeRole> From<tungstenite::HandshakeError<T>> for Error {
     }
 }
 
-impl From<dotenv::Error> for Error {
-    fn from(value: dotenv::Error) -> Self {
-        Self(value.to_string())
-    }
-}
-
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(&self.0)
@@ -51,14 +46,18 @@ impl std::fmt::Debug for Error {
     }
 }
 
-fn handle_stream(stream: Result<TcpStream, std::io::Error>, pass: &str) -> Result<()> {
+fn handle_stream(stream: Result<TcpStream, std::io::Error>) -> Result<()> {
     let mut ws = accept(stream?)?;
 
     let msg = ws.read()?;
     let user = String::from_utf8(msg.into_data())?;
 
     let stdout = Command::new("mcrcon")
-        .args(["-p", pass, format!("whitelist add {}", user).as_str()])
+        .args([
+            "-p",
+            env::RCON_PASS,
+            format!("whitelist add {}", user).as_str(),
+        ])
         .output()?
         .stdout;
 
@@ -68,31 +67,27 @@ fn handle_stream(stream: Result<TcpStream, std::io::Error>, pass: &str) -> Resul
     } else {
         let res = String::from_utf8_lossy(stdout.as_slice());
 
-        if res.starts_with("That player does not exist") {
+        if res.starts_with("That player does not exist")
+            || res.starts_with("Incorrect argument for command")
+        {
             1 // "Player doesn't exist"
         } else if res.starts_with("Player is already whitelisted") {
             2 // "Already whitelisted"
         } else if res.starts_with("Added") {
             3 // "Success"
         } else {
-            4 // "Unexpected server response"
+            4 // "Invalid "
         }
     };
     ws.send(Message::Binary(vec![status])).map_err(Into::into)
 }
 
 fn main() -> Result<()> {
-    dotenv()?;
-    let addr = var("WLRS_SERVER_ADDR")?;
-    let pass = var("RCON_PASS")?;
-
-    let server = TcpListener::bind(addr)?;
+    let server = TcpListener::bind(env::WLRS_SERVER_ADDR)?;
 
     for stream in server.incoming() {
-        let pass = pass.clone();
-
         spawn(move || {
-            if let Err(e) = handle_stream(stream, &pass) {
+            if let Err(e) = handle_stream(stream) {
                 eprintln!("{}", e)
             }
         });

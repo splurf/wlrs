@@ -7,4 +7,6 @@ edition = "2021"
 
 [dependencies]
 tungstenite = { version = "0.21.0", features = ["native-tls"] }
+
+[build-dependencies]
 dotenv = "0.15.0"

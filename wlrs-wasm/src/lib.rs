@@ -1,7 +1,8 @@
+mod env;
+
 #[cfg(feature = "debug")]
 mod utils;
 
-use dotenv::{dotenv, var};
 use wasm_bindgen::prelude::*;
 use web_sys::{
     js_sys::{ArrayBuffer, Uint8Array},
@@ -18,29 +19,31 @@ struct HtmlElementStyle;
 
 impl HtmlElementStyle {
     fn set_color(e: &HtmlElement, status: Status) {
-        drop(e.set_attribute(
+        e.set_attribute(
             "color",
             match status {
                 Status::Success => "#4dff4d",
                 Status::Warning => "#ffe400",
                 Status::Failure => "#ff5050",
             },
-        ))
+        )
+        .unwrap_or_default()
     }
 }
 
+#[cfg(feature = "debug")]
 #[wasm_bindgen]
 extern "C" {
     #[wasm_bindgen(js_namespace = console)]
     fn log(s: &str);
 }
 
-fn handle_input(input: String, p: HtmlElement, addr: &str) {
+fn handle_input(input: String, p: HtmlElement) {
     if input.is_empty() {
         return p.set_text_content(Some("Please provide a valid username."));
     }
 
-    let ws = if let Ok(ws) = WebSocket::new(addr) {
+    let ws = if let Ok(ws) = WebSocket::new(env::WLRS_WEBSOCKET_ADDR) {
         ws
     } else {
         p.set_text_content(Some("Failed to initiate websocket."));
@@ -100,9 +103,6 @@ fn start() {
     #[cfg(feature = "debug")]
     utils::set_panic_hook();
 
-    dotenv().expect("Failed to get environmental variables.");
-    let addr = var("WLRS_WEBSOCKET_ADDR").unwrap();
-
     let window = window().expect("Failed to get Window object.");
     let document = window.document().expect("Failed to get Document object.");
 
@@ -125,11 +125,9 @@ fn start() {
         .expect("Failed to cast to 'HtmlElement'.");
 
     {
-        let value =
-            Closure::wrap(
-                Box::new(move |_: Event| handle_input(input.value(), p.clone(), &addr))
-                    as Box<dyn Fn(_)>,
-            );
+        let value = Closure::wrap(Box::new(move |_: Event| {
+            handle_input(input.value().trim().to_string(), p.clone())
+        }) as Box<dyn Fn(_)>);
         submit.set_onclick(Some(value.as_ref().unchecked_ref()));
         value.forget();
     }
