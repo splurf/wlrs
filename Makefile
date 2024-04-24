@@ -13,14 +13,12 @@ release: build
 
 
 install:
-	@mkdir -p /opt/wlrs-wasm
-	@mkdir -p /opt/wlrs-server
+	rm -rf /opt/wlrs/*
+	@mkdir -p /opt/wlrs/wlrs-wasm
+	@mkdir -p /opt/wlrs/wlrs-server
 
-	rm -rf /opt/wlrs-wasm/*
-	rm -rf /opt/wlrs-server/*
-
-	cp -r dist /opt/wlrs/wlrs-wasm/
-	cp -r target /opt/wlrs/wlrs-wasm/
+	cp wlrs-wasm/index.html /opt/wlrs/wlrs-wasm/
+	cp -r wlrs-wasm/dist /opt/wlrs/wlrs-wasm/
 	
 	cp target/release/wlrs-server /usr/local/bin/
 
