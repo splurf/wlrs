@@ -2,6 +2,7 @@
 name = "wlrs-server"
 version = "0.1.0"
 edition = "2021"
+default-run = "wlrs-server"
 
 [dependencies]
 tungstenite = { version = "0.21.0", features = ["native-tls"] }
