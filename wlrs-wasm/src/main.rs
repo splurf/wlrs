@@ -84,6 +84,7 @@ fn on_submit(
     }
 }
 
+#[allow(non_snake_case)]
 #[function_component]
 fn App() -> Html {
     let text = use_state_eq(String::new);

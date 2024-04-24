@@ -47,8 +47,6 @@ impl std::fmt::Debug for Error {
 }
 
 fn handle_stream(stream: Result<TcpStream, std::io::Error>) -> Result<()> {
-    println!("SNDIUFOSEf");
-
     let mut ws = accept(stream?)?;
 
     let msg = ws.read()?;
@@ -78,7 +76,7 @@ fn handle_stream(stream: Result<TcpStream, std::io::Error>) -> Result<()> {
         } else if res.starts_with("Added") {
             3 // "Success"
         } else {
-            4 // "Invalid "
+            4 // "Invalid"
         }
     };
     ws.send(Message::Binary(vec![status])).map_err(Into::into)
@@ -86,6 +84,8 @@ fn handle_stream(stream: Result<TcpStream, std::io::Error>) -> Result<()> {
 
 fn main() -> Result<()> {
     let server = TcpListener::bind(env::WLRS_SERVER_ADDR)?;
+
+    println!("Listening @ http://{}\n", server.local_addr()?);
 
     for stream in server.incoming() {
         spawn(move || {
