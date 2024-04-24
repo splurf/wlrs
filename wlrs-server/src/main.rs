@@ -47,6 +47,8 @@ impl std::fmt::Debug for Error {
 }
 
 fn handle_stream(stream: Result<TcpStream, std::io::Error>) -> Result<()> {
+    println!("SNDIUFOSEf");
+
     let mut ws = accept(stream?)?;
 
     let msg = ws.read()?;

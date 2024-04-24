@@ -1,9 +1,5 @@
+/dist
 /target
-**/*.rs.bk
-Cargo.lock
-bin/
-pkg/
-wasm-pack.log
-.env
-install.sh
 **/env.rs
+.env
+Cargo.lock
