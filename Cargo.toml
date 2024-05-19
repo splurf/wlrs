@@ -3,8 +3,10 @@ name = "wlrs"
 version = "0.1.0"
 edition = "2021"
 
-[dependencies]
-
 [build-dependencies]
 wlrs-auth = { path = "wlrs-auth", features = ["build"] }
 dotenv = "0.15.0"
+
+[profile.release]
+codegen-units = 1
+lto = true
