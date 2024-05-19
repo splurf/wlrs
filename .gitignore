@@ -1,2 +1,4 @@
-**/target
-**/.env
+**/env.rs
+/target
+.env
+Cargo.lock
