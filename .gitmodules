@@ -1,3 +1,7 @@
+[submodule "wlrs-auth"]
+	path = wlrs-auth
+	url = https://github.com/splurf/wlrs-auth.git
+
 [submodule "wlrs-server"]
 	path = wlrs-server
 	url = https://github.com/splurf/wlrs-server.git
