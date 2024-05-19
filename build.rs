@@ -19,7 +19,6 @@ fn main() {
     println!("cargo:rerun-if-changed=.env");
     dotenv().ok();
 
-    let mut root = File::create("src/env.rs").unwrap();
     let mut server = File::create("wlrs-server/src/env.rs").unwrap();
     let mut wasm = File::create("wlrs-wasm/src/env.rs").unwrap();
 
@@ -34,13 +33,15 @@ fn main() {
     let salt_key = format!("{}_SALT", server_pass_key);
     let hash_key = format!("{}_HASH", server_pass_key);
 
-    root.write_all(pub_const_fmt(&salt_key, &salt_value).as_bytes())
-        .unwrap();
-    root.write_all(pub_const_fmt(&hash_key, &hash_value).as_bytes())
-        .unwrap();
-
     server.write_all(server_addr.as_bytes()).unwrap();
     server.write_all(rcon_pass.as_bytes()).unwrap();
+
+    server
+        .write_all(pub_const_fmt(&salt_key, &salt_value).as_bytes())
+        .unwrap();
+    server
+        .write_all(pub_const_fmt(&hash_key, &hash_value).as_bytes())
+        .unwrap();
 
     wasm.write_all(websocket_addr.as_bytes()).unwrap();
 }
