@@ -9,4 +9,3 @@
 [submodule "wlrs-wasm"]
 	path = wlrs-wasm
 	url = https://github.com/splurf/wlrs-wasm.git
-	branch = main
