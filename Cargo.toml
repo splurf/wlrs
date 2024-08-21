@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [build-dependencies]
-wlrs-auth = { path = "wlrs-auth", features = ["build"] }
 dotenv = "0.15.0"
+wlrs-auth = { path = "wlrs-auth", features = ["build"] }
 
 [profile.release]
 codegen-units = 1
